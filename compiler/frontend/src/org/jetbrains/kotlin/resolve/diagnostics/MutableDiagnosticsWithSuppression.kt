@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.resolve.diagnostics
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import java.util.ArrayList
 import com.intellij.openapi.util.CompositeModificationTracker
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.CachedValueImpl
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.PsiElement
@@ -39,9 +40,12 @@ class MutableDiagnosticsWithSuppression @JvmOverloads constructor(
 
     private fun readonlyView(): DiagnosticsWithSuppression = cache.value!!
 
-    override val modificationTracker by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        CompositeModificationTracker(delegateDiagnostics.modificationTracker)
-    }
+    private val cachedModificationTracker = CachedValueImpl(CachedValueProvider {
+        CachedValueProvider.Result(CompositeModificationTracker(delegateDiagnostics.modificationTracker), ModificationTracker.NEVER_CHANGED)
+    })
+
+    override val modificationTracker
+        get() = cachedModificationTracker.value!!
 
     override fun all(): Collection<Diagnostic> =
         if (diagnosticList.isEmpty()) delegateDiagnostics.all() else readonlyView().all()
