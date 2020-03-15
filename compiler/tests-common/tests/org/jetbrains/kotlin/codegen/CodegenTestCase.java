@@ -163,7 +163,7 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
         List<String> kotlinConfigurationFlags = new ArrayList<>(0);
         for (TestFile testFile : testFilesWithConfigurationDirectives) {
             String content = testFile.content;
-            Map<String, String> directives = usePreparsedDirectives ? testFile.directives : parseDirectivesAndFlags(content);
+            Directives directives = usePreparsedDirectives ? testFile.directives : parseDirectivesAndFlags(content);
 
             String configurationFlags = directives.get("KOTLIN_CONFIGURATION_FLAGS");
             if (configurationFlags != null) {
@@ -187,8 +187,8 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
                 );
             }
 
-            if (directives.containsKey("COMMON_COROUTINES_TEST")) {
-                assert !directives.containsKey("COROUTINES_PACKAGE") : "Must replace COROUTINES_PACKAGE prior to tests compilation";
+            if (directives.contains("COMMON_COROUTINES_TEST")) {
+                assert !directives.contains("COROUTINES_PACKAGE") : "Must replace COROUTINES_PACKAGE prior to tests compilation";
                 if (DescriptorUtils.COROUTINES_PACKAGE_FQ_NAME_EXPERIMENTAL.asString().equals(coroutinesPackage)) {
                     disableReleaseCoroutines = true;
                     includeCompatExperimentalCoroutines = true;
@@ -781,7 +781,7 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
         List testFiles = TestFiles.createTestFiles(file.getName(), expectedText, new TestFiles.TestFileFactoryNoModules<TestFile>() {
             @NotNull
             @Override
-            public TestFile create(@NotNull String fileName, @NotNull String text, @NotNull Map<String, String> directives) {
+            public TestFile create(@NotNull String fileName, @NotNull String text, @NotNull Directives directives) {
                 return new TestFile(fileName, text, directives);
             }
         }, false, coroutinesPackage, parseDirectivesPerFiles());
