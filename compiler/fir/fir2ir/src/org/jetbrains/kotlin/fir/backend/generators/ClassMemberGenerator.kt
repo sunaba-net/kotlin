@@ -102,17 +102,15 @@ internal class ClassMemberGenerator(
                 val delegatedConstructor = firFunction.delegatedConstructor
                 if (delegatedConstructor != null) {
                     val irDelegatingConstructorCall = delegatedConstructor.toIrDelegatingConstructorCall()
-                    body.statements += irDelegatingConstructorCall ?: delegatedConstructor.convertWithOffsets { startOffset, endOffset ->
-                        IrErrorCallExpressionImpl(
-                            startOffset, endOffset, returnType, "Cannot find delegated constructor call"
-                        )
-                    }
+                    // TODO: performance!
+                    body.statements.add(0, irDelegatingConstructorCall)
                 }
                 if (delegatedConstructor?.isThis == false) {
-                    val irClass = parent as IrClass
-                    body.statements += IrInstanceInitializerCallImpl(
-                        startOffset, endOffset, irClass.symbol, irFunction.constructedClassType
+                    val instanceInitializerCall = IrInstanceInitializerCallImpl(
+                        startOffset, endOffset, (parent as IrClass).symbol, irFunction.constructedClassType
                     )
+                    // TODO: performance!
+                    body.statements.add(1, instanceInitializerCall)
                 }
                 if (body.statements.isNotEmpty()) {
                     irFunction.body = body
@@ -247,10 +245,14 @@ internal class ClassMemberGenerator(
         return this
     }
 
-    private fun FirDelegatedConstructorCall.toIrDelegatingConstructorCall(): IrCallWithIndexedArgumentsBase? {
+    private fun FirDelegatedConstructorCall.toIrDelegatingConstructorCall(): IrExpressionBase {
         val constructedIrType = constructedTypeRef.toIrType()
         val constructorSymbol = (this.calleeReference as? FirResolvedNamedReference)?.resolvedSymbol as? FirConstructorSymbol
-            ?: return null
+            ?: return convertWithOffsets { startOffset, endOffset ->
+                IrErrorCallExpressionImpl(
+                    startOffset, endOffset, constructedIrType, "Cannot find delegated constructor call"
+                )
+            }
         return convertWithOffsets { startOffset, endOffset ->
             val irConstructorSymbol = declarationStorage.getIrFunctionSymbol(constructorSymbol) as IrConstructorSymbol
             if (constructorSymbol.fir.isFromEnumClass || constructorSymbol.fir.returnTypeRef.isEnum) {
