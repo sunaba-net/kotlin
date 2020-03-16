@@ -571,6 +571,10 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         exitSafeCall(qualifiedAccessExpression)
     }
 
+    fun exitResolvedQualifierNode(resolvedQualifier: FirResolvedQualifier) {
+        graphBuilder.exitResolvedQualifierNode(resolvedQualifier).mergeIncomingFlow()
+    }
+
     fun exitFunctionCall(functionCall: FirFunctionCall) {
         val node = graphBuilder.exitFunctionCall(functionCall).mergeIncomingFlow()
         if (functionCall.isBooleanNot()) {

@@ -599,6 +599,10 @@ class ControlFlowGraphBuilder {
         return node
     }
 
+    fun exitResolvedQualifierNode(resolvedQualifier: FirResolvedQualifier): ResolvedQualifierNode {
+        return createResolvedQualifierNode(resolvedQualifier).also(this::addNewSimpleNode)
+    }
+
     fun exitFunctionCall(functionCall: FirFunctionCall): FunctionCallNode {
         val returnsNothing = functionCall.resultType.isNothing
         val node = createFunctionCallNode(functionCall)
